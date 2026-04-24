@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金融政策找企业管理系统</title>
+    <style>
+        /* 基础样式重置与全局变量 */
+        :root {
+            --primary-color: #1890ff;
+            --success-color: #52c41a;
+            --error-color: #f5222d;
+            --text-color: #333;
+            --text-secondary: #666;
+            --bg-color: #f0f2f5;
+            --border-color: #e8e8e8;
+        }
+        body { font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; color: var(--text-color); }
+        * { box-sizing: border-box; }
+        
+        /* 布局与卡片 */
+        .layout { padding: 20px; max-width: 1400px; margin: 0 auto; }
+        .card { background: #fff; border-radius: 4px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .page-header { font-size: 16px; font-weight: bold; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
+        
+        /* 表单与按钮元素 */
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; align-items: center; flex-wrap: wrap; }
+        .form-item { display: flex; align-items: center; gap: 8px; }
+        input[type="text"], input[type="date"], select, textarea { padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px; outline: none; transition: 0.3s; font-family: inherit; }
+        input[type="text"]:focus, textarea:focus { border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(24,144,255,0.2); }
+        .btn { padding: 6px 15px; border: 1px solid transparent; border-radius: 4px; cursor: pointer; transition: 0.3s; font-size: 14px; background: #fff; border-color: #d9d9d9; color: var(--text-color); }
+        .btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
+        .btn-primary { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+        .btn-primary:hover { background: #40a9ff; color: #fff; }
+        .btn-danger { color: var(--error-color); border-color: transparent; background: none; padding: 0 5px;}
+        .btn-link { color: var(--primary-color); background: none; border: none; padding: 0 5px; cursor: pointer; }
+        
+        /* 提示条 (Alert) */
+        .alert-info { background-color: #e6f7ff; border: 1px solid #91d5ff; padding: 10px 15px; border-radius: 4px; margin-bottom: 15px; font-size: 14px; color: #333; display: flex; align-items: center; }
+        .alert-info strong { color: var(--primary-color); font-size: 18px; margin: 0 5px; }
+        .alert-icon { color: var(--primary-color); font-size: 16px; margin-right: 8px; }
+        .alert-divider { margin: 0 15px; color: #91d5ff; }
+        .alert-subtext { font-size: 13px; color: var(--text-secondary); margin-left: 8px; }
+        .alert-subtext strong { font-size: 14px; color: var(--text-color); margin: 0 3px; }
+        
+        /* 表格样式 */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th, td { border-bottom: 1px solid var(--border-color); padding: 12px 10px; text-align: left; }
+        th { background: #fafafa; font-weight: 500; }
+        tr:hover { background-color: #fafafa; }
+        .text-center { text-align: center; }
+        
+        /* 分页组件 (Pagination) */
+        .pagination { display: flex; justify-content: flex-end; align-items: center; margin-top: 20px; gap: 10px; font-size: 14px; color: var(--text-secondary); }
+        .pagination select { padding: 4px 8px; }
+        .page-btn { padding: 4px 10px; border: 1px solid #d9d9d9; background: #fff; border-radius: 4px; cursor: pointer; transition: 0.3s; }
+        .page-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
+        .page-btn.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+        
+        /* 标签状态 */
+        .badge { padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+        .bg-blue { background: #e6f7ff; color: var(--primary-color); border: 1px solid #91d5ff; }
+        .bg-green { background: #f6ffed; color: var(--success-color); border: 1px solid #b7eb8f; }
+        .bg-gray { background: #f5f5f5; color: #666; border: 1px solid #d9d9d9; }
+        .bg-red { background: #fff1f0; color: var(--error-color); border: 1px solid #ffa39e; }
+        
+        /* 抽屉(Drawer)样式 */
+        .drawer-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.45); z-index: 999; display: none; opacity: 0; transition: opacity 0.3s; }
+        .drawer { position: fixed; top: 0; right: -700px; width: 700px; height: 100vh; background: #fff; z-index: 1000; transition: right 0.3s cubic-bezier(0.23, 1, 0.32, 1); display: flex; flex-direction: column; box-shadow: -2px 0 8px rgba(0,0,0,0.15); }
+        .drawer.show { right: 0; }
+        .drawer-overlay.show { display: block; opacity: 1; }
+        .drawer-header { padding: 16px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: bold; }
+        .drawer-close { cursor: pointer; font-size: 20px; color: #999; }
+        .drawer-close:hover { color: #333; }
+        .drawer-body { padding: 24px; overflow-y: auto; flex: 1; }
+        .drawer-footer { padding: 16px 24px; border-top: 1px solid var(--border-color); text-align: right; background: #fff; }
+        
+        /* 抽屉内部表单细节 */
+        .upload-box { border: 1px dashed #d9d9d9; border-radius: 4px; padding: 40px 20px; text-align: center; background-color: #fafafa; cursor: pointer; transition: 0.3s; }
+        .upload-box:hover { border-color: var(--primary-color); background-color: #f0f7ff; }
+        .upload-icon { font-size: 32px; color: #a0cfff; margin-bottom: 10px; }
+        
+        /* 详情展示样式 */
+        .info-row { display: flex; margin-bottom: 16px; font-size: 14px; }
+        .info-label { width: 150px; color: var(--text-secondary); text-align: right; padding-right: 15px; line-height: 1.5; }
+        .info-value { flex: 1; color: var(--text-color); line-height: 1.5; }
+
+        /* 页面切换隐藏 */
+        .page-view { display: none; }
+        .page-view.active { display: block; }
+
+        /* 产品规则说明模块 */
+        .product-rules { margin-top: 30px; padding: 15px 20px; background-color: #fafafa; border-left: 4px solid #d9d9d9; border-radius: 4px; font-size: 13px; color: #555; line-height: 1.8; }
+        .product-rules h4 { margin: 0 0 10px 0; color: #333; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="layout">
+    
+    <!-- 视图一：主列表页 -->
+    <div id="page-list" class="page-view active">
+        <div class="card">
+            <div class="page-header">首页 / 金融政策找企业</div>
+            
+            <!-- 筛选区 -->
+            <div class="form-row">
+                <div class="form-item">
+                    <label>政策标题：</label>
+                    <input type="text" placeholder="请输入政策关键字" style="width: 200px;">
+                </div>
+                <div class="form-item">
+                    <label>创建日期：</label>
+                    <input type="date"> 至 <input type="date">
+                </div>
+                <div class="form-item">
+                    <label>政策状态：</label>
+                    <select>
+                        <option>全部</option>
+                        <option>草稿</option>
+                        <option>已匹配</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary">查询</button>
+                <button class="btn">重置</button>
+            </div>
+            
+            <!-- 操作区与汇总数据 -->
+            <div class="form-row" style="margin-top: 20px; justify-content: space-between;">
+                <div>
+                    <button class="btn btn-primary" onclick="openDrawer()">+ 新建政策</button>
+                    <button class="btn" style="margin-left: 10px;">批量删除</button>
+                </div>
+            </div>
+
+            <!-- 数据汇总提示条 -->
+            <div class="alert-info">
+                <span class="alert-icon">ℹ</span> 
+                累计政策总数：<strong>125</strong> 个 
+                <span class="alert-subtext">
+                    （草稿 <strong>15</strong>，已匹配 <strong>110</strong>）
+                </span>
+                <span class="alert-divider">|</span> 
+                累计政策触达总数：<strong>4,400</strong> 家
+            </div>
+            
+            <!-- 数据列表区 -->
+            <table>
+                <thead>
+                    <tr>
+                        <th width="40" class="text-center"><input type="checkbox"></th>
+                        <th width="50" class="text-center">序号</th>
+                        <th width="20%">政策标题</th> 
+                        <th width="30%">短信内容（政策摘要）</th> 
+                        <th>政策触达数</th>
+                        <th>状态</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="text-center"><input type="checkbox"></td>
+                        <td class="text-center">1</td>
+                        <td><strong>2026外汇支持专项信贷</strong></td>
+                        <td style="font-size: 13px; color: #666; line-height: 1.5;">尊敬的企业，贵司符合2026外汇支持专项信贷政策，请及时登录系统办理。</td>
+                        <td>3,250 家</td>
+                        <td><span class="badge bg-green">已匹配</span></td>
+                        <td>2026-03-20</td>
+                        <td>
+                            <button class="btn-link" onclick="goDetail()">查看企业</button>
+                            <button class="btn-link" onclick="goPolicyInfo()">查看详情</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-center"><input type="checkbox"></td>
+                        <td class="text-center">2</td>
+                        <td><strong>浙江省跨境电商扶持金定向名单</strong></td>
+                        <td style="font-size: 13px; color: #666; line-height: 1.5;">您好，跨境电商扶持金已开启申报通道，凭此短信可优先办理。</td>
+                        <td>1,150 家</td>
+                        <td><span class="badge bg-green">已匹配</span></td>
+                        <td>2026-03-21</td>
+                        <td>
+                            <button class="btn-link" onclick="goDetail()">查看企业</button>
+                            <button class="btn-link" onclick="goPolicyInfo()">查看详情</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-center"><input type="checkbox"></td>
+                        <td class="text-center">3</td>
+                        <td><strong>测试政策(待确认)</strong></td>
+                        <td style="font-size: 13px; color: #666; line-height: 1.5;">这是一条测试短信摘要内容...</td>
+                        <td>-</td>
+                        <td><span class="badge bg-gray">草稿</span></td>
+                        <td>2026-03-23</td>
+                        <td>
+                            <button class="btn-link">编辑</button>
+                            <button class="btn-danger">删除</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- 分页组件 -->
+            <div class="pagination">
+                <span>共 3 条记录</span>
+                <select>
+                    <option>10 条/页</option>
+                    <option>20 条/页</option>
+                </select>
+                <button class="page-btn">&lt;</button>
+                <button class="page-btn active">1</button>
+                <button class="page-btn">&gt;</button>
+            </div>
+            
+            <!-- 产品规则 -->
+            <div class="product-rules">
+                <h4>📌 产品规则说明（列表页）</h4>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li><strong>状态说明：</strong>“草稿”表示仅保存了基础信息，暂未进行企业数据匹配；“已匹配”表示系统已完成名单解析及工商库碰撞。</li>
+                    <li><strong>数据统计：</strong>政策触达数代表该政策中成功匹配且系统预计可发送短信提醒的实际企业数量。</li>
+                    <li><strong>操作权限：</strong>仅处于“草稿”状态的政策允许编辑或删除，已匹配的政策为保护触达记录完整性，暂不支持直接修改。</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- 视图三：查看企业详情页 (触达记录) -->
+    <div id="page-detail" class="page-view">
+        <div style="margin-bottom: 15px;">
+            <button class="btn" onclick="goList()"> &lt; 返回政策列表 </button>
+            <span style="font-weight: bold; margin-left: 15px; font-size: 16px;">当前政策：【2026外汇支持专项信贷】企业列表</span>
+        </div>
+        
+        <div class="card">
+            <div class="form-row">
+                <div class="form-item">
+                    <label>企业名称：</label>
+                    <input type="text" placeholder="请输入企业名称或信用代码" style="width: 250px;">
+                </div>
+                <div class="form-item">
+                    <label>短信状态：</label>
+                    <select>
+                        <option>全部</option>
+                        <option>成功</option>
+                        <option>失败</option>
+                        <option>未发</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary">查询</button>
+                <button class="btn">重置</button>
+            </div>
+            
+            <div class="form-row" style="margin-top: 15px;">
+                <button class="btn btn-primary">导出企业名单 (Excel)</button>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th width="40" class="text-center"><input type="checkbox"></th>
+                        <th width="50" class="text-center">序号</th>
+                        <th width="30%">企业名称</th>
+                        <th>统一社会信用代码</th>
+                        <th>联系人</th>
+                        <th>联系电话</th>
+                        <th>短信状态</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="text-center"><input type="checkbox"></td>
+                        <td class="text-center">1</td>
+                        <td>杭州市XX进出口有限公司</td>
+                        <td>91330100MA5EXXX...</td>
+                        <td>张*</td>
+                        <td>138****1111</td>
+                        <td><span class="badge bg-green">成功</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="pagination">
+                <span>共 3,250 条记录</span>
+                <select><option>10 条/页</option></select>
+                <button class="page-btn">&lt;</button>
+                <button class="page-btn active">1</button>
+                <button class="page-btn">&gt;</button>
+            </div>
+            
+            <!-- 产品规则 -->
+            <div class="product-rules">
+                <h4>📌 产品规则说明（企业名单页）</h4>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li><strong>数据脱敏展示：</strong>为保护企业关键人员隐私，界面默认对法人/联系人姓名进行半脱敏处理（显示首字），联系电话隐藏中间四位。</li>
+                    <li><strong>短信状态反馈：</strong>反映网关实际送达情况。未发（系统待下发）、成功（目标手机已接收）、失败（号码错误/停机/被拦截等）。导出名单时保留此状态用于归档分析。</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- 视图四：查看政策详情页 -->
+    <div id="page-info" class="page-view">
+        <div style="margin-bottom: 15px;">
+            <button class="btn" onclick="goList()"> &lt; 返回政策列表 </button>
+            <span style="font-weight: bold; margin-left: 15px; font-size: 16px;">政策详情</span>
+        </div>
+        
+        <div class="card">
+            <div class="page-header">政策基础信息</div>
+            
+            <div style="margin-top: 20px;">
+                <div class="info-row">
+                    <div class="info-label">政策标题：</div>
+                    <div class="info-value" style="font-weight: bold; font-size: 16px;">2026外汇支持专项信贷</div>
+                </div>
+                
+                <div class="info-row">
+                    <div class="info-label">当前状态：</div>
+                    <div class="info-value"><span class="badge bg-green">已匹配</span></div>
+                </div>
+
+                <div class="info-row">
+                    <div class="info-label">短信内容（政策摘要）：</div>
+                    <div class="info-value">
+                        <div style="background-color: #fafafa; border: 1px solid #e8e8e8; padding: 12px 15px; border-radius: 4px; display: inline-block; max-width: 600px;">
+                            尊敬的企业，贵司符合2026外汇支持专项信贷政策，请及时登录系统办理。
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-row">
+                    <div class="info-label">企业代码类型：</div>
+                    <div class="info-value">统一社会信用代码</div>
+                </div>
+
+                <div class="info-row">
+                    <div class="info-label">导入企业名单：</div>
+                    <div class="info-value">
+                        <span style="font-size: 18px; color: #a0cfff; vertical-align: middle;">📄</span> 
+                        <span style="vertical-align: middle; margin: 0 10px;">外汇信贷目标企业名单.xlsx</span>
+                        <button class="btn-link" style="vertical-align: middle;">下载查看</button>
+                    </div>
+                </div>
+
+                <div class="info-row">
+                    <div class="info-label">创建时间：</div>
+                    <div class="info-value">2026-03-20 14:30:00</div>
+                </div>
+                
+                <div class="info-row">
+                    <div class="info-label">匹配开始时间：</div>
+                    <div class="info-value" style="color: var(--text-secondary);">2026-03-20 14:35:00</div>
+                </div>
+                
+                <div class="info-row">
+                    <div class="info-label">匹配结束时间：</div>
+                    <div class="info-value" style="color: var(--text-secondary);">2026-03-20 15:10:45</div>
+                </div>
+
+            </div>
+
+            <!-- 操作记录表格 -->
+            <div class="page-header" style="margin-top: 40px;">操作记录</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th width="20%">操作时间</th>
+                        <th width="20%">操作人</th>
+                        <th width="20%">操作类型</th>
+                        <th>操作备注</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2026-03-20 15:10:45</td>
+                        <td>系统</td>
+                        <td>匹配完成</td>
+                        <td>名单处理及匹配完成，成功导入 3,250 家企业信息</td>
+                    </tr>
+                    <tr>
+                        <td>2026-03-20 14:35:00</td>
+                        <td>管理员 (Admin)</td>
+                        <td>发起匹配</td>
+                        <td>导入《外汇信贷目标企业名单.xlsx》并触发匹配动作</td>
+                    </tr>
+                    <tr>
+                        <td>2026-03-20 14:30:00</td>
+                        <td>管理员 (Admin)</td>
+                        <td>新建政策</td>
+                        <td>创建政策并保存为草稿</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- 产品规则 -->
+            <div class="product-rules">
+                <h4>📌 产品规则说明（详情与操作日志页）</h4>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li><strong>匹配机制：</strong>系统会提取导入Excel中的“企业代码”，与底层工商数据库进行碰撞，若匹配失败将不会计入最终触达名单。起止时间用于反映数据处理耗时。</li>
+                    <li><strong>安全审计：</strong>政策的创建、修改、发起匹配等关键核心动作均会被系统记录并留痕，以供后续安全审查与追溯。</li>
+                </ol>
+            </div>
+            
+        </div>
+    </div>
+
+</div>
+
+<!-- 视图二：新建政策抽屉 (Drawer) -->
+<div class="drawer-overlay" id="drawerMask" onclick="closeDrawer()"></div>
+<div class="drawer" id="policyDrawer">
+    <div class="drawer-header">
+        <span>新建金融政策</span>
+        <span class="drawer-close" onclick="closeDrawer()">×</span>
+    </div>
+    <div class="drawer-body">
+        
+        <div style="margin-bottom: 20px;">
+            <label style="display:block; margin-bottom: 5px; font-weight: bold;"><span style="color:red">*</span> 政策标题：</label>
+            <input type="text" placeholder="请输入政策标题" maxlength="30" style="width: 100%;">
+        </div>
+        
+        <div style="margin-bottom: 25px;">
+            <label style="display:block; margin-bottom: 5px; font-weight: bold;"><span style="color:red">*</span> 短信内容（政策摘要）：</label>
+            <textarea rows="5" placeholder="请输入将要发送给企业的短信内容或政策摘要..." style="width: 100%; padding: 10px;"></textarea>
+            <div style="font-size: 12px; color: #999; margin-top: 5px; text-align: right;">已输入 0 / 200 字</div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="display:block; margin-bottom: 5px; font-weight: bold;"><span style="color:red">*</span> 企业代码类型：</label>
+            <div style="display: flex; gap: 20px; align-items: center; padding: 5px 0; font-size: 14px;">
+                <label style="cursor: pointer;"><input type="radio" name="codeType" value="1" checked> 统一社会信用代码</label>
+                <label style="cursor: pointer;"><input type="radio" name="codeType" value="2"> 组织机构代码</label>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label style="display:block; margin-bottom: 5px; font-weight: bold;">
+                <span style="color:red">*</span> 导入企业名单：
+                <a href="#" style="font-size: 13px; color: var(--primary-color); font-weight: normal; margin-left: 10px;">下载导入模板</a>
+            </label>
+            
+            <div class="upload-box">
+                <div class="upload-icon">📄</div>
+                <button class="btn btn-primary" style="margin-bottom: 8px;">点击选择文件</button>
+                <div style="font-size: 12px; color: #999;">支持上传 Excel (.xls, .xlsx) 或 CSV 格式文件</div>
+            </div>
+            
+            <div style="margin-top: 8px; font-size: 13px; color: #666; background: #fafafa; padding: 10px; border-radius: 4px; border-left: 3px solid #d9d9d9;">
+                <strong>💡 导入模板要求：</strong><br>
+                上传表格需包含两列：<span style="color:var(--error-color);">企业代码（必填）</span>、企业名称（选填）
+            </div>
+        </div>
+
+    </div>
+    <div class="drawer-footer">
+        <button class="btn" onclick="closeDrawer()" style="margin-right: 10px;">取 消</button>
+        <button class="btn" style="margin-right: 10px;">保存为草稿</button>
+        <button class="btn btn-primary" onclick="closeDrawer()">保存并匹配</button>
+    </div>
+</div>
+
+<!-- 交互逻辑脚本 -->
+<script>
+    // 隐藏所有的页面视图
+    function hideAllPages() {
+        const pages = document.querySelectorAll('.page-view');
+        pages.forEach(page => page.classList.remove('active'));
+    }
+
+    // 跳转到查看企业 (触达明细)
+    function goDetail() {
+        hideAllPages();
+        document.getElementById('page-detail').classList.add('active');
+        window.scrollTo(0,0);
+    }
+
+    // 跳转到查看政策详情 (基础信息)
+    function goPolicyInfo() {
+        hideAllPages();
+        document.getElementById('page-info').classList.add('active');
+        window.scrollTo(0,0);
+    }
+
+    // 返回主列表
+    function goList() {
+        hideAllPages();
+        document.getElementById('page-list').classList.add('active');
+    }
+
+    // 右侧抽屉展开收起逻辑
+    function openDrawer() {
+        document.getElementById('drawerMask').classList.add('show');
+        document.getElementById('policyDrawer').classList.add('show');
+    }
+
+    function closeDrawer() {
+        document.getElementById('drawerMask').classList.remove('show');
+        document.getElementById('policyDrawer').classList.remove('show');
+    }
+</script>
+
+</body>
+</html>
