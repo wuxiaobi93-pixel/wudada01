@@ -1,6 +1,5 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
+<!doctype html>
+<html lang="zh-CN"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>金融政策找企业管理系统</title>
@@ -229,9 +228,9 @@
         }
     </style>
 </head>
-<body>
+<body class="with-annotation-panel">
 
-<div class="topbar">
+<div class="topbar prd-annotation-target-active">
     <div class="brand"><span class="brand-mark">L</span><span>丽即通</span></div>
     <div class="top-nav">
         <span class="active">运营侧管理</span>
@@ -591,6 +590,8 @@
 </div>
 </main>
 
+<script id="prd-annotation-export-state" type="application/json">[[1,"\u003cp>\u003cspan class=\"prd-annotation-section\">显示样式：\u003c/span>页面采用截图中的后台管理框架，顶部包含品牌、一级导航、操作手册入口、用户身份信息；左侧为业务菜单，内容区顶部保留面包屑。\u003c/p>\n                    \u003cul>\n                        \u003cli>当前一级导航固定高亮 \u003cstrong>运营侧管理\u003c/strong>。\u003c/li>\n                        \u003cli>左侧菜单中 \u003cstrong>通知公告 / 金融政策找企业\u003c/strong> 为当前页面入口。\u003c/li>\n                        \u003cli>面包屑展示路径：运营侧管理 / 通知公告 / 金融政策找企业。\u003c/li>\n                    \u003c/ul>\n                    \u003cp>\u003cspan class=\"prd-annotation-section\">交互与约束：\u003c/span>导航与侧栏不参与业务数据操作，仅用于保持页面归属感；标注挂载到 body，不能改变头部或侧栏尺寸。\u003c/p>\u003cp>333888899\u003c/p>"]]</script>
+
 <!-- 视图二：新建政策抽屉 (Drawer) -->
 <div class="drawer-overlay" id="drawerMask" onclick="closeDrawer()"></div>
 <div class="drawer" id="policyDrawer">
@@ -616,7 +617,7 @@
             <label style="display:block; margin-bottom: 5px; font-weight: bold;"><span style="color:red">*</span> 企业代码类型：</label>
             <!-- 增加代码类型选择 -->
             <div style="display: flex; gap: 20px; align-items: center; padding: 5px 0; font-size: 14px;">
-                <label style="cursor: pointer;"><input type="radio" name="codeType" value="1" checked> 1 - 统一社会信用代码</label>
+                <label style="cursor: pointer;"><input type="radio" name="codeType" value="1" checked=""> 1 - 统一社会信用代码</label>
                 <label style="cursor: pointer;"><input type="radio" name="codeType" value="2"> 2 - 组织机构代码</label>
             </div>
         </div>
@@ -733,6 +734,13 @@
         const panelKey = 'prd-page-annotation-active';
         document.body.classList.add('with-annotation-panel');
         document.querySelectorAll('.prd-annotation-badge, .prd-annotation-tooltip, .annotation-panel, [data-prd-annotation-generated="true"]').forEach(node => node.remove());
+        const exportStateNode = document.getElementById('prd-annotation-export-state');
+        let embeddedState = [];
+        try {
+            embeddedState = exportStateNode ? JSON.parse(exportStateNode.textContent || '[]') : [];
+        } catch (error) {
+            embeddedState = [];
+        }
 
         const annotations = [
             {
@@ -861,7 +869,7 @@
             }
         ];
 
-        const editorState = new Map(JSON.parse(localStorage.getItem(storageKey) || '[]'));
+        const editorState = new Map(embeddedState.length ? embeddedState : JSON.parse(localStorage.getItem(storageKey) || '[]'));
         const badges = [];
         let activeAnnotationId = Number(localStorage.getItem(panelKey) || 1);
         let panel;
@@ -891,7 +899,13 @@
         function persistState() {
             localStorage.setItem(storageKey, JSON.stringify([...editorState.entries()]));
             localStorage.setItem(panelKey, String(activeAnnotationId));
+            syncEmbeddedState();
             updatePanelStatus('已保存');
+        }
+
+        function syncEmbeddedState() {
+            if (!exportStateNode) return;
+            exportStateNode.textContent = JSON.stringify([...editorState.entries()]).replace(/</g, '\\u003c');
         }
 
         function updatePanelStatus(text) {
@@ -960,6 +974,7 @@
                     <div class="annotation-panel-status">未保存</div>
                     <div>
                         <button class="btn" type="button" data-action="export">导出</button>
+                        <button class="btn" type="button" data-action="export-html">导出发布版 HTML</button>
                         <button class="btn btn-primary" type="button" data-action="save">保存</button>
                     </div>
                 </div>
@@ -992,6 +1007,17 @@
                 const link = document.createElement('a');
                 link.href = url;
                 link.download = 'prd-page-annotation.md';
+                link.click();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            });
+            panel.querySelector('[data-action="export-html"]').addEventListener('click', () => {
+                syncEmbeddedState();
+                const html = '<!doctype html>\n' + document.documentElement.outerHTML;
+                const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'prd-page-annotation-publish.html';
                 link.click();
                 setTimeout(() => URL.revokeObjectURL(url), 1000);
             });
@@ -1055,6 +1081,7 @@
 
         function applyInitialState() {
             if (!panel) createPanel();
+            syncEmbeddedState();
             badges.push(...annotations.map(annotation => ({ annotation, badge: renderBadge(annotation) })));
             const initial = annotations.find(item => item.id === activeAnnotationId) || annotations[0];
             openPanel(initial.id);
@@ -1070,5 +1097,38 @@
     })();
 </script>
 
-</body>
-</html>
+<aside class="annotation-panel show">
+                <div class="annotation-panel-header">
+                    <div class="annotation-panel-header-main">
+                        <div class="annotation-panel-title">需求说明</div>
+                        <div class="annotation-panel-subtitle">可直接在编辑区修改，点击保存后写入本地副本</div>
+                    </div>
+                    <button class="annotation-panel-close" type="button">×</button>
+                </div>
+                <div class="annotation-panel-meta"><span class="annotation-panel-id">1</span><span class="annotation-panel-name">需求编号 1 - 全局框架与导航</span></div>
+                <div class="annotation-editor-toolbar">
+                    <button class="annotation-tool" data-cmd="bold" type="button"><strong>B</strong></button>
+                    <button class="annotation-tool" data-cmd="italic" type="button"><em>I</em></button>
+                    <button class="annotation-tool" data-cmd="insertUnorderedList" type="button">•</button>
+                    <button class="annotation-tool" data-cmd="insertOrderedList" type="button">1.</button>
+                    <button class="annotation-tool" data-cmd="formatBlock" data-value="blockquote" type="button">"</button>
+                    <button class="annotation-tool" data-cmd="removeFormat" type="button">Tx</button>
+                </div>
+                <div class="annotation-editor" contenteditable="true" spellcheck="false" data-annotation-id="1"><p><span class="prd-annotation-section">显示样式：</span>页面采用截图中的后台管理框架，顶部包含品牌、一级导航、操作手册入口、用户身份信息；左侧为业务菜单，内容区顶部保留面包屑。</p>
+                    <ul>
+                        <li>当前一级导航固定高亮 <strong>运营侧管理</strong>。</li>
+                        <li>左侧菜单中 <strong>通知公告 / 金融政策找企业</strong> 为当前页面入口。</li>
+                        <li>面包屑展示路径：运营侧管理 / 通知公告 / 金融政策找企业。</li>
+                    </ul>
+                    <p><span class="prd-annotation-section">交互与约束：</span>导航与侧栏不参与业务数据操作，仅用于保持页面归属感；标注挂载到 body，不能改变头部或侧栏尺寸。</p><p>333888899</p></div>
+                <div class="annotation-panel-footer">
+                    <div class="annotation-panel-status">已保存</div>
+                    <div>
+                        <button class="btn" type="button" data-action="export">导出</button>
+                        <button class="btn" type="button" data-action="export-html">导出发布版 HTML</button>
+                        <button class="btn btn-primary" type="button" data-action="save">保存</button>
+                    </div>
+                </div>
+            </aside><span class="prd-annotation-badge" data-prd-annotation-id="1" data-prd-annotation-generated="true" style="display: inline-block; left: 1515px; top: -8px;">1</span><span class="prd-annotation-badge" data-prd-annotation-id="2" data-prd-annotation-generated="true" style="display: inline-block; left: 1052px; top: 184.5px;">2</span><span class="prd-annotation-badge" data-prd-annotation-id="3" data-prd-annotation-generated="true" style="display: inline-block; left: 1052px; top: 320.5px;">3</span><span class="prd-annotation-badge" data-prd-annotation-id="4" data-prd-annotation-generated="true" style="display: inline-block; left: 1052px; top: 373.5px;">4</span><span class="prd-annotation-badge" data-prd-annotation-id="5" data-prd-annotation-generated="true" style="display: inline-block; left: 1052px; top: 435.5px;">5</span><span class="prd-annotation-badge" data-prd-annotation-id="6" data-prd-annotation-generated="true" style="display: none;">6</span><span class="prd-annotation-badge" data-prd-annotation-id="7" data-prd-annotation-generated="true" style="display: none;">7</span><span class="prd-annotation-badge" data-prd-annotation-id="8" data-prd-annotation-generated="true" style="display: inline-block; left: 2213px; top: -8px;">8</span>
+
+</body></html>
